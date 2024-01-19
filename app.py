@@ -1,3 +1,4 @@
+import plost
 import streamlit as st
 import os
 import random
@@ -7,6 +8,8 @@ import tempfile
 import sys
 import pandas as pd
 from scapy.utils import corrupt_bytes
+from streamlit_echarts import st_echarts
+
 # from scapy.layers.inet import IP,TCP,UDP,
 from utils.pcap_decode import PcapDecode
 import time
@@ -369,11 +372,11 @@ def main():
             all_data = get_all_pcap(pcap_data, PD)
 
             # Data Protocol analysis start
-            data_len_stats = pcap_len_statistic(pcap_data)  #protocol len statistics
-            data_protocol_stats=common_proto_statistic(pcap_data )# count the occurrences of common network protocols
-            data_count_dict = most_proto_statistic(pcap_data, PD) # counts the occurrences of each protocol and returns most common 10 protocols.
-            http_key,http_value = https_stats_main(pcap_data)   #https Protocol Statistics
-            dns_key,dns_value = dns_stats_main(pcap_data)   #DNS Protocol Statistics
+            data_len_stats = pcap_len_statistic(pcap_data)          #protocol len statistics
+            data_protocol_stats=common_proto_statistic(pcap_data )  # count the occurrences of common network protocols
+            data_count_dict = most_proto_statistic(pcap_data, PD)    # counts the occurrences of each protocol and returns most common 10 protocols.
+            http_key,http_value = https_stats_main(pcap_data)        #https Protocol Statistics
+            dns_key,dns_value = dns_stats_main(pcap_data)            #DNS Protocol Statistics
             # Data Protocol analysis end
 
 
@@ -415,7 +418,7 @@ def main():
             print('data_ip_dict--->', data_ip_dict)
             print('proto_flow_dict--->', proto_flow_dict)
             print('most_flow_dict--->', most_flow_dict)
-            # print('most_flow_key', most_flow_key)
+            ## print('most_flow_key', most_flow_key)
 
 
 
@@ -425,6 +428,9 @@ def main():
             dataframe_data = process_json_data(all_data)
             st.write("All PCAPs:")
             st.dataframe(dataframe_data, use_container_width=True)
+
+            #Data as Plot generated
+
 
         else:
             st.warning("Please upload a valid PCAP file.")
