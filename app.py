@@ -401,23 +401,24 @@ def main():
 
             # Test area *************************************
             # Data Protocol analysis
-            print('data_len_stats', data_len_stats)
-            print('data_protocol_stats', data_protocol_stats)
-            print('data_count_dict', data_count_dict)
-            print('http_key', http_key)
-            print('http_value', http_value)
-            print('dns_key', dns_key)
-            print('dns_value', dns_value)
+            # print('data_len_stats', data_len_stats)
+            # print('data_protocol_stats', data_protocol_stats)
+            # print('data_count_dict', data_count_dict)
+            # print('http_key', http_key)
+            # print('http_value', http_value)
+            # print('dns_key', dns_key)
+            # print('dns_value', dns_value)
 
 
 
             # TRaffic analysis
-            print('time_flow_dict--->',time_flow_dict)
-            print('host_ip--->', host_ip)
-            print('data_flow_dict--->', data_flow_dict)
-            print('data_ip_dict--->', data_ip_dict)
-            print('proto_flow_dict--->', proto_flow_dict)
-            print('most_flow_dict--->', most_flow_dict)
+            # print('time_flow_dict--->',time_flow_dict)
+            # print('host_ip--->', host_ip)
+            # print('data_flow_dict--->', data_flow_dict)
+            # print('data_ip_dict--->', data_ip_dict)
+            # print('proto_flow_dict--->', proto_flow_dict)
+            # print('most_flow_dict--->', most_flow_dict)
+
             ## print('most_flow_key', most_flow_key)
 
 
@@ -430,17 +431,66 @@ def main():
             st.dataframe(dataframe_data, use_container_width=True)
 
             #Data as Plot generated
-            # plost.donut_chart(data =dataframe_data ,theta='q2',color='company')
-            # data = {
-            #                 'company': ['Apple', 'Microsoft', 'Google', 'Amazon'],
-            #                 'q2': [30, 20, 25, 25],
-            #                 'q3': [2, 5, 6, 7]
-            #             }
-            # df = pd.DataFrame(data)
-            # plost.donut_chart(
-            #     data =df,
-            #     theta='q2',
-            #     color='company')
+            # Data of Protocol Analysis
+            st.write("Data Packet Length Statistics")
+            data1 = {'pcap_len': list(data_len_stats.keys()), 'count': list(data_len_stats.values())}
+            df1 = pd.DataFrame(data1)
+            plost.donut_chart(data =df1,theta='count',color='pcap_len')
+
+            st.write("Common Protocol Statistics")
+            data2 = {'protocol_type': list(data_protocol_stats.keys()), 'number_of_packets': list(data_protocol_stats.values())}
+            df2 = pd.DataFrame(data2)
+            plost.bar_chart(data=df2,bar='protocol_type',value='number_of_packets')
+
+            st.write("Most Frequent Protocol Statistics")
+            data3 = {'protocol_type': list(data_count_dict.keys()), 'freq': list(data_count_dict.values())}
+            df3 = pd.DataFrame(data3)
+            plost.donut_chart(data=df3,theta='freq',color='protocol_type')
+
+            st.write("HTTP/HTTPS Access Statistics")
+            data4={'HTTP/HTTPS key': list(http_key), 'HTTP/HTTPS value': list(http_value)}
+            df4=pd.DataFrame(data4)
+            plost.bar_chart(data=df4,bar='HTTP/HTTPS key',value='HTTP/HTTPS value',direction='horizontal')
+
+            st.write("DNS Access Statistics")
+            data5={'dns_key': list(dns_key), 'dns_value': list(dns_value)}
+            df5 = pd.DataFrame(data5)
+            plost.bar_chart(data=df5, bar='dns_key', value='dns_value', direction='horizontal')
+
+            # Data of Traffic Analysis
+            # Not Working
+            st.write("Time-Flow Chart")
+            data6={'Relative_Time': list(time_flow_dict.keys()), 'Packet_Bytes': list(time_flow_dict.values())}
+            df6 = pd.DataFrame(data6)
+            print(df6)
+            plost.line_chart(data=df6,x="Relative_Time",y="Packet_Bytes")
+
+
+            # Data In/Out Statistics
+            st.write(" Data In/Out Statistics")
+            data7 = {'In/Out': list(data_flow_dict.keys()), 'freq': list(data_flow_dict.values())}
+            df7 = pd.DataFrame(data7)
+            plost.donut_chart(data=df7, theta='freq', color='In/Out')
+
+
+            #Total Protocol Packet Flow
+            st.write("Total Protocol Packet Flow ")
+            data8= {'Protocol': list(proto_flow_dict.keys()), 'freq': list(proto_flow_dict.values())}
+            df8 = pd.DataFrame(data8)
+            plost.donut_chart(data=df8, theta='freq', color='Protocol')
+
+            # Total Protocol Packet Flow
+            st.write("Total Protocol Packet Flow bar chart")
+            data9 = {'Protocol': list(proto_flow_dict.keys()), 'freq': list(proto_flow_dict.values())}
+            df9 = pd.DataFrame(data9)
+            plost.bar_chart(data=df9,bar='Protocol',value='freq')
+
+            # Most Protocol Packet Flow
+            # st.write("Most Protocol Packet Flow bar chart")
+            # data10 = {'Protocol': list(most_flow_dict.keys()), 'freq': list(most_flow_dict.values())}
+            # df10 = pd.DataFrame(data10)
+            # plost.bar_chart(data=df10, bar='Protocol', value='freq')
+            # # most_flow_dict
 
         else:
             st.warning("Please upload a valid PCAP file.")
