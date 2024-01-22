@@ -430,7 +430,17 @@ def main():
             st.dataframe(dataframe_data, use_container_width=True)
 
             #Data as Plot generated
-
+            # plost.donut_chart(data =dataframe_data ,theta='q2',color='company')
+            # data = {
+            #                 'company': ['Apple', 'Microsoft', 'Google', 'Amazon'],
+            #                 'q2': [30, 20, 25, 25],
+            #                 'q3': [2, 5, 6, 7]
+            #             }
+            # df = pd.DataFrame(data)
+            # plost.donut_chart(
+            #     data =df,
+            #     theta='q2',
+            #     color='company')
 
         else:
             st.warning("Please upload a valid PCAP file.")
