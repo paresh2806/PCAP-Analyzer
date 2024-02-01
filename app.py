@@ -13,6 +13,7 @@ from scapy.utils import corrupt_bytes
 from streamlit_echarts import st_echarts
 import geoip2.database
 import pydeck as pdk
+import folium
 
 # from scapy.layers.inet import IP,TCP,UDP,
 from utils.pcap_decode import PcapDecode
@@ -407,20 +408,56 @@ def get_ipmap(PCAPS, host_ip):
     return [geo_dict, ip_value_list]
 
 
+# def ipmap(PCAPS):
+#     myip = getmyip()
+#     host_ip = get_host_ip(PCAPS)
+#     ipdata = get_ipmap(PCAPS, host_ip)
+#     geo_dict = ipdata[0]
+#     ip_value_list = ipdata[1]
+#     myip_geo = get_geo(myip)
+#     ip_value_list = [(list(d.keys())[0], list(d.values())[0])
+#                      for d in ip_value_list]
+#     # print('ip_value_list', ip_value_list)
+#     # print('geo_dict', geo_dict)
+#     # return render_template('./dataanalyzer/ipmap.html', geo_data=geo_dict, ip_value=ip_value_list, mygeo=myip_geo)
+#     return geo_dict, ip_value_list, myip_geo
+
+
 def ipmap(PCAPS):
+    # Assuming these functions are defined elsewhere in your code
     myip = getmyip()
-    if myip:
-        host_ip = get_host_ip(PCAPS)
-        ipdata = get_ipmap(PCAPS, host_ip)
-        geo_dict = ipdata[0]
-        ip_value_list = ipdata[1]
-        myip_geo = get_geo(myip)
-        ip_value_list = [(list(d.keys())[0], list(d.values())[0])
-                         for d in ip_value_list]
-        # print('ip_value_list', ip_value_list)
-        # print('geo_dict', geo_dict)
-        # return render_template('./dataanalyzer/ipmap.html', geo_data=geo_dict, ip_value=ip_value_list, mygeo=myip_geo)
-    return geo_dict, ip_value_list, myip_geo
+    host_ip = get_host_ip(PCAPS)
+    ipdata = get_ipmap(PCAPS, host_ip)
+    geo_dict = ipdata[0]
+    ip_value_list = ipdata[1]
+    myip_geo = get_geo(myip)
+    ip_value_list = [(list(d.keys())[0], list(d.values())[0]) for d in ip_value_list]
+
+    # Create DataFrames from the dictionaries and lists
+    geo_df = pd.DataFrame(list(geo_dict.items()), columns=['Location', 'Coordinates'])
+    ip_df = pd.DataFrame(ip_value_list, columns=['Location', 'IP'])
+
+    # Check if myip_geo is not None before creating the DataFrame
+    if myip_geo is not None:
+        myip_geo_df = pd.DataFrame(list(myip_geo.items()), columns=['MyLocation', 'MyCoordinates'])
+
+        # Merge the DataFrames based on the 'Location' column
+        merged_df = geo_df.merge(ip_df, on='Location', how='left').merge(myip_geo_df, left_on='Location',
+                                                                         right_on='MyLocation', how='left')
+    else:
+        # If myip_geo is None, merge only geo_df and ip_df
+        merged_df = geo_df.merge(ip_df, on='Location', how='left')
+
+    # Split the 'IP' column into 'Numeric_Value' and 'IP_Address'
+    merged_df[['Data_Traffic', 'IP_Address']] = merged_df['IP'].str.split(':', expand=True)
+
+    # Drop the original 'IP' column
+    merged_df = merged_df.drop('IP', axis=1)
+
+    # Display the merged DataFrame
+    st.write(merged_df)
+
+    return merged_df
 
 
 def main():
@@ -555,44 +592,37 @@ def main():
             # # most_flow_dict
 
             # Getting Geoplots
-            geo_data,ip_data,ipgeo_data=ipmap(pcap_data)
-            # print("ip_data--->",ip_data)
-            print("geo_data--->",geo_data)
-            # print("ipgeo_data--->",ipgeo_data)
-
-            city_names = [entry[0].split('United States')[-1].strip() for entry in ip_data]
-            Data_Traffic = [entry[1].split(':')[0] for entry in ip_data]
-            Access_ip = [entry[1].split(':')[1] for entry in ip_data]
-
-            print("city_names--->", city_names)
-            print("things_before_colon--->", Data_Traffic)
-            print("things_after_colon--->", Access_ip)
-
-            ## Create a sample DataFrame with latitude and longitude values
-            chart_data = pd.DataFrame(
-                np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-                columns=['lat', 'lon'])
+            ipmap_result = ipmap(pcap_data)
+            print(ipmap_result)
 
             st.pydeck_chart(pdk.Deck(
                 map_style=None,
                 initial_view_state=pdk.ViewState(
-                    latitude=37.76,
-                    longitude=-122.4,
-                    zoom=11,
+                    latitude=ipmap_result['Coordinates'][0][1],
+                    longitude=ipmap_result['Coordinates'][0][0],
+                    zoom=2,
                     pitch=50,
                 ),
                 layers=[
                     pdk.Layer(
                         'ScatterplotLayer',
-                        data=chart_data,
-                        get_position='[lon, lat]',
+                        data=ipmap_result,
+                        get_position='MyCoordinates' if 'MyCoordinates' in ipmap_result.columns else 'Coordinates',
                         get_color='[200, 30, 0, 160]',
-                        get_radius=200,
+                        get_radius='Data_Traffic*10000',
                         pickable=True,
                         auto_highlight=True,
-                    ),
+                        # Animation settings
+                        animation=True,
+                        animation_interval=300,  # Set the interval for animation in milliseconds
+                        animation_duration=2000,  # Set the total duration of animation in milliseconds
+                        viewport_id='viewport1',
+                        # Define tooltip content
+                        ),
                 ],
             ))
+
+
 
         else:
             st.warning("Please upload a valid PCAP file.")
