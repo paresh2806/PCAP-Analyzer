@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import plost
 import requests
@@ -475,8 +477,8 @@ def main():
     st.title("File Upload App")
 
     # File uploader widget
-    uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt", "xlsx", "pcap", "cap"])
-
+    uploaded_file = st.sidebar.file_uploader("Choose a file", type=["csv", "txt", "xlsx", "pcap", "cap"])
+    # st.sidebar.divider()
     if uploaded_file is not None:
         # Display file details
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
@@ -491,37 +493,89 @@ def main():
             all_data = get_all_pcap(pcap_data, PD)
             dataframe_data = process_json_data(all_data)
             start_time, end_time, live_time_duration, live_time_duration_str = calculate_live_time(pcap_data)
+
             # Add live time information to the data frame
             # dataframe_data['Start Time'] = start_time
             # dataframe_data['End Time'] = end_time
             dataframe_data['Live Time Duration'] = live_time_duration_str
+            all_columns = list(dataframe_data.columns)
             st.sidebar.header("P1ease Filter Here:")
-            procotol = st.sidebar.multiselect(
+            # st.sidebar.divider()
+            # Filter reset button
+            if st.sidebar.button("Reset Filters"):
+                st.experimental_rerun()
+            # Multiselect for filtering by protocol
+            selected_protocols = st.sidebar.multiselect(
                 "Select Protocol:",
-                options=dataframe_data["Procotol"].unique(),default=None)
+                options=dataframe_data["Procotol"].unique(), default=None
+            )
+            # st.sidebar.divider()
 
-            if procotol is None or not procotol:
+            # Sidebar slider for filtering by length
+            filter_value_len = st.sidebar.slider(
+                "Filter by Numeric Column",
+                min_value=min(dataframe_data["len"]),
+                max_value=max(dataframe_data["len"]),
+                value=(min(dataframe_data["len"]), max(dataframe_data["len"]))
+            )
+            # st.sidebar.divider()
+
+            # Sidebar text input for filtering by Source
+            filter_source = st.sidebar.text_input("Filter by Source:", "")
+            # st.sidebar.divider()
+
+            # Sidebar text input for filtering by Destination
+            filter_destination = st.sidebar.text_input("Filter by Destination:", "")
+            # st.sidebar.divider()
+
+
+            # Apply filters based on user selection
+            if (
+                    selected_protocols is None or not selected_protocols) and not filter_value_len and not filter_source and not filter_destination:
                 st.write("All PCAPs:")
-                Data_to_display_df1 = dataframe_data.copy()
-                st.dataframe(Data_to_display_df1, use_container_width=True)
+                Data_to_display_df = dataframe_data.copy()
+                st.dataframe(Data_to_display_df, use_container_width=True)
 
             else:
-                Data_to_display_df1 = dataframe_data[dataframe_data["Procotol"].isin(procotol)]
+                # Apply filters based on user input
+
+                # Filter by protocol
+                if selected_protocols is not None and selected_protocols:
+                    Data_to_display_df = dataframe_data[dataframe_data["Procotol"].isin(selected_protocols)]
+                else:
+                    Data_to_display_df = dataframe_data
+
+                # Filter by length
+                Data_to_display_df = Data_to_display_df[
+                    (Data_to_display_df["len"] >= filter_value_len[0]) & (
+                                Data_to_display_df["len"] <= filter_value_len[1])
+                    ]
+
+                # Filter by Source
+                if filter_source:
+                    Data_to_display_df = Data_to_display_df[
+                        Data_to_display_df["Source"].str.contains(filter_source, case=False, na=False)]
+
+                # Filter by Destination
+                if filter_destination:
+                    Data_to_display_df = Data_to_display_df[
+                        Data_to_display_df["Destination"].str.contains(filter_destination, case=False, na=False)]
+
+                # Display the filtered dataframe
                 st.write("Filtered PCAPs:")
-                st.dataframe(Data_to_display_df1)
 
-            # Sidebar slider for filtering
-            filter_value_len = st.sidebar.slider("Filter by Numeric Column", min_value=min(dataframe_data["len"]),
-                                             max_value=max(dataframe_data["len"]),
-                                             value=(min(dataframe_data["len"]), max(dataframe_data["len"])))
 
-            if not filter_value_len:
-               Data_to_display_df2=Data_to_display_df1.copy()
-               st.dataframe(Data_to_display_df2, use_container_width=True)
-
-            else:
-               Data_to_display_df2 = Data_to_display_df1[(Data_to_display_df1["len"] >= filter_value_len[0]) & (Data_to_display_df1["len"] <= filter_value_len[1])]
-               st.dataframe(Data_to_display_df2, use_container_width=True)
+                column_check=st.checkbox("Do you want to filter the data by column wise also ???")
+                if column_check:
+                    # Multiselect for filtering by columns
+                    selected_columns = st.multiselect(
+                        "Select Columns to Display:",
+                        options=all_columns, default=all_columns
+                    )
+                    Data_to_display_df = Data_to_display_df[selected_columns]
+                # selected_columns = [col for col in Data_to_display_df.columns if st.checkbox(col, value=True )]
+                st.checkbox("Use container width", value=False, key="use_container_width")
+                st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
 
         else:
             st.warning("Please upload a valid PCAP file.")
