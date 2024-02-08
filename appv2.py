@@ -735,8 +735,40 @@ def CommonProtocolStatistics(data):
 
 
 
-# def MostFrequentProtocolStatistics():
-#
+def MostFrequentProtocolStatistics(data):
+    st.write("Data Packet Length Statistics")
+    data3 = {'protocol_type': list(data.keys()), 'freq': list(data.values())}
+    df3 = pd.DataFrame(data3)
+
+    options = {
+        "title": {"text": "Most Frequent Protocol Statistics", "subtext": "", "left": "center"},
+        "tooltip": {"trigger": "item"},
+        "legend": {"orient": "vertical", "left": "left", },
+        "series": [
+            {
+                "name": "Packets",
+                "type": "pie",
+                "radius": "50%",
+                "data": [
+                    {"value": count, "name": pcap_len}
+                    for pcap_len, count in zip(df3['protocol_type'], df3['freq'])
+                ],
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+            }
+        ],
+        "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
+    }
+
+    st.write("Data Packet Length Statistics11")
+    st_echarts(options=options, height="600px", renderer='svg')
+
+
 # def HTTP_HTTPS_AccessStatistics():
 #
 # def DNSAccessStatistics():
@@ -801,9 +833,8 @@ def main():
 
         # Data as Plot generated
         DataPacketLengthStatistics(data_len_stats)
-        print('data_protocol_stats--->', data_protocol_stats)
-
         CommonProtocolStatistics(data_protocol_stats)
+        MostFrequentProtocolStatistics(data_count_dict)
 
 
 
