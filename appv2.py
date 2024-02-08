@@ -4,7 +4,6 @@
 
 
 from datetime import datetime
-
 import numpy as np
 import plost
 import requests
@@ -25,10 +24,17 @@ from streamlit_option_menu import option_menu
 # from scapy.layers.inet import IP,TCP,UDP,
 from utils.pcap_decode import PcapDecode
 import time
+from streamlit_pandas_profiling import st_profile_report
 
 PD = PcapDecode()  # Parser
 PCAPS = None  # Packets
 
+
+if 'uploaded_file' not in st.session_state:
+    st.session_state.uploaded_file = None
+
+if 'pcap_data' not in st.session_state:
+    st.session_state.pcap_data = None
 
 def get_all_pcap(PCAPS, PD):
     pcaps = collections.OrderedDict()
@@ -476,8 +482,8 @@ def ipmap(PCAPS):
 
     return merged_df
 
-def page_file_upload():
 
+def page_file_upload():
     # # File upload
     # uploaded_file = st.file_uploader("Choose a CSV file", type=["csv","pcap", "cap"])
     #
@@ -514,7 +520,9 @@ def page_display_info():
         # st.write(f"File Name: {st.session_state.uploaded_file.name}")
         # st.write(f"File Type: {st.session_state.uploaded_file.type}")
         # st.write(f"File Size: {st.session_state.uploaded_file.size} bytes")
-        file_details = {"File Name": st.session_state.uploaded_file.name, "File Type":st.session_state.uploaded_file.type, "File Size": st.session_state.uploaded_file.size}
+        file_details = {"File Name": st.session_state.uploaded_file.name,
+                        "File Type": st.session_state.uploaded_file.type,
+                        "File Size": st.session_state.uploaded_file.size}
         st.write(file_details)
 
 
@@ -577,7 +585,7 @@ def RawDataView():
         if uploaded_file.type == "application/octet-stream":
             # Process the uploaded PCAP file
             pcap_data = rdpcap(os.path.join(uploaded_file.name))
-
+            st.session_state.pcap_data = pcap_data
             # Example: Get all PCAPs
             all_data = get_all_pcap(pcap_data, PD)
             dataframe_data = process_json_data(all_data)
@@ -664,18 +672,84 @@ def RawDataView():
                 st.checkbox("Use container width", value=True, key="use_container_width")
                 st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
 
+
+
         else:
             st.warning("Please upload a valid PCAP file.")
 
+
+
+def DataPacketLengthStatistics(data):
+    st.write("Data Packet Length Statistics")
+    data1 = {'pcap_len': list(data.keys()), 'count': list(data.values())}
+    df1 = pd.DataFrame(data1)
+
+    options = {
+        "title": {"text": "Data Packet Length Statistics", "subtext": "", "left": "center"},
+        "tooltip": {"trigger": "item"},
+        "legend": {"orient": "vertical", "left": "left", },
+        "series": [
+            {
+                "name": "Packets",
+                "type": "pie",
+                "radius": "50%",
+                "data": [
+                    {"value": count, "name": pcap_len}
+                    for pcap_len, count in zip(df1['pcap_len'], df1['count'])
+                ],
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+            }
+        ],
+        "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
+    }
+
+    st.write("Data Packet Length Statistics11")
+    st_echarts(options=options, height="600px", renderer='svg')
+
+
+def CommonProtocolStatistics(data):
+    st.write("Common Protocol Statistics")
+    data2 = {'protocol_type': list(data.keys()),
+             'number_of_packets': list(data.values())}
+    df2 = pd.DataFrame(data2)
+    # plost.bar_chart(data=df2, bar='protocol_type', value='number_of_packets')
+
+    options = {
+        "xAxis": {
+            "type": "category",
+            "data": df2.protocol_type.tolist(),
+        },
+        "yAxis": {"type": "value"},
+        "series": [{"data": df2.number_of_packets.tolist(), "type": "bar"}],
+    }
+    st_echarts(options=options, height="500px")
+
+
+
+
+
+
+# def MostFrequentProtocolStatistics():
+#
+# def HTTP_HTTPS_AccessStatistics():
+#
+# def DNSAccessStatistics():
+
+
+
 def main():
-
-
     st.set_page_config(page_title="PCAP Dashboard", page_icon="📈", layout="wide")
     # download from Bootstrap
-    selected= option_menu(
+    selected = option_menu(
         menu_title=None,
-        options=["Home","Upload File","Raw Data & Filtering","Analysis"],
-        icons=["house","upload","files","graph-up"],
+        options=["Home", "Upload File", "Raw Data & Filtering", "Analysis"],
+        icons=["house", "upload", "files", "graph-up"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
@@ -692,11 +766,45 @@ def main():
         page_file_upload()
         page_display_info()
 
-
     # Raw Data Visualizer and Filtering
-    if selected== "Raw Data & Filtering":
+    if selected == "Raw Data & Filtering":
         st.subheader("Raw Data Can be Visualized Here")
         RawDataView()
+
+    if selected == "Analysis":
+        st.subheader("Dashboard")
+
+        # get analysis of data
+        data_of_pcap = st.session_state.pcap_data
+        data_len_stats = pcap_len_statistic(data_of_pcap)  # protocol len statistics
+        data_protocol_stats = common_proto_statistic(data_of_pcap)  # count the occurrences of common network protocols
+        data_count_dict = most_proto_statistic(data_of_pcap,
+                                               PD)  # counts the occurrences of each protocol and returns most common 10 protocols.
+        http_key, http_value = https_stats_main(data_of_pcap)  # https Protocol Statistics
+        dns_key, dns_value = dns_stats_main(data_of_pcap)  # DNS Protocol Statistics
+        # Data Protocol analysis end
+
+        # Traffic analysis start
+        time_flow_dict = time_flow(data_of_pcap)
+        host_ip = get_host_ip(data_of_pcap)
+        data_flow_dict = data_flow(data_of_pcap, host_ip)
+        data_ip_dict = data_in_out_ip(data_of_pcap, host_ip)
+        proto_flow_dict = proto_flow(data_of_pcap)
+        most_flow_dict = most_flow_statistic(data_of_pcap, PD)
+        most_flow_dict = sorted(most_flow_dict.items(), key=lambda d: d[1], reverse=True)
+        if len(most_flow_dict) > 10:
+            most_flow_dict = most_flow_dict[0:10]
+        most_flow_key = list()
+        for key, value in most_flow_dict:
+            most_flow_key.append(key)
+        # Traffic analysis end
+
+        # Data as Plot generated
+        DataPacketLengthStatistics(data_len_stats)
+        print('data_protocol_stats--->', data_protocol_stats)
+
+        CommonProtocolStatistics(data_protocol_stats)
+
 
 
 if __name__ == "__main__":
