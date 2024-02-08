@@ -477,16 +477,34 @@ def ipmap(PCAPS):
     return merged_df
 
 def page_file_upload():
-    st.subheader("File Upload Page")
 
-    # File upload
-    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv","pcap", "cap"])
+    # # File upload
+    # uploaded_file = st.file_uploader("Choose a CSV file", type=["csv","pcap", "cap"])
+    #
+    # # Store the uploaded file in session state
+    # st.session_state.uploaded_file = uploaded_file
+    #
+    # if uploaded_file is not None:
+    #     st.success("File uploaded successfully!")
+    if "uploaded_file" not in st.session_state or st.session_state.uploaded_file is None:
+        # File upload
+        uploaded_file = st.file_uploader("Choose a CSV file", type=["csv", "pcap", "cap"])
 
-    # Store the uploaded file in session state
-    st.session_state.uploaded_file = uploaded_file
+        # Store the uploaded file in session state
+        st.session_state.uploaded_file = uploaded_file
 
-    if uploaded_file is not None:
-        st.success("File uploaded successfully!")
+        if uploaded_file is not None:
+            st.success("File uploaded successfully!")
+    else:
+        # Display existing file info
+        st.warning("An uploaded file already exists in the session state.")
+
+        # Option to delete existing file and upload a new one
+        delete_existing = st.button("Delete Existing File and Upload New File")
+        if delete_existing:
+            st.session_state.uploaded_file = None
+            st.success("Existing file deleted. Please upload a new file.")
+            page_file_upload()
 
 
 def page_display_info():
@@ -498,6 +516,156 @@ def page_display_info():
         # st.write(f"File Size: {st.session_state.uploaded_file.size} bytes")
         file_details = {"File Name": st.session_state.uploaded_file.name, "File Type":st.session_state.uploaded_file.type, "File Size": st.session_state.uploaded_file.size}
         st.write(file_details)
+
+
+def Intro():
+    # Introduction
+    st.markdown(
+        """
+        Packet Capture (PCAP) files are a common way to store network traffic data. They contain information about
+        the packets exchanged between devices on a network. This data is crucial for network analysis and cybersecurity.
+
+        ## What is a PCAP file?
+
+        A PCAP file (Packet Capture) is a binary file that stores network traffic data. It records the details of
+        each packet, such as source and destination addresses, protocol, and payload. PCAP files are widely used by
+        network administrators, security professionals, and researchers to analyze network behavior.
+
+        ## Importance in Cybersecurity
+
+        PCAP files play a vital role in cybersecurity for several reasons:
+
+        - **Network Traffic Analysis:** Analyzing PCAP files helps detect anomalies, identify patterns, and
+          understand network behavior.
+
+        - **Incident Response:** In the event of a security incident, PCAP files can be instrumental in
+          reconstructing the sequence of events and identifying the root cause.
+
+        - **Forensic Investigations:** PCAP files provide a detailed record of network activity, aiding in
+          forensic investigations to determine the source and impact of security incidents.
+
+        ## Getting Started
+
+        To get started with PCAP analysis, you can use tools like Wireshark or tshark. Additionally, Python
+        libraries such as Scapy and PyShark provide programmatic access to PCAP data.
+
+        ```python
+        # Example using Scapy
+        from scapy.all import rdpcap
+
+        # Load PCAP file
+        pcap_file = "example.pcap"
+        packets = rdpcap(pcap_file)
+
+        # Analyze packets
+        for packet in packets:
+            # Perform analysis here
+            pass
+        ```
+
+        Explore the capabilities of PCAP analysis tools to enhance your understanding of network traffic and
+        strengthen cybersecurity practices.
+
+        """
+    )
+
+
+def RawDataView():
+    uploaded_file = st.session_state.uploaded_file
+    if uploaded_file is not None:
+        # Check if the uploaded file is a PCAP file
+        if uploaded_file.type == "application/octet-stream":
+            # Process the uploaded PCAP file
+            pcap_data = rdpcap(os.path.join(uploaded_file.name))
+
+            # Example: Get all PCAPs
+            all_data = get_all_pcap(pcap_data, PD)
+            dataframe_data = process_json_data(all_data)
+            start_time, end_time, live_time_duration, live_time_duration_str = calculate_live_time(pcap_data)
+
+            # Add live time information to the data frame
+            # dataframe_data['Start Time'] = start_time
+            # dataframe_data['End Time'] = end_time
+            dataframe_data['Live Time Duration'] = live_time_duration_str
+            all_columns = list(dataframe_data.columns)
+            st.sidebar.header("P1ease Filter Here:")
+            # st.sidebar.divider()
+            # Filter reset button
+            if st.sidebar.button("Reset Filters"):
+                st.experimental_rerun()
+            # Multiselect for filtering by protocol
+            selected_protocols = st.sidebar.multiselect(
+                "Select Protocol:",
+                options=dataframe_data["Procotol"].unique(), default=None
+            )
+            # st.sidebar.divider()
+
+            # Sidebar slider for filtering by length
+            filter_value_len = st.sidebar.slider(
+                "Filter by Numeric Column",
+                min_value=min(dataframe_data["len"]),
+                max_value=max(dataframe_data["len"]),
+                value=(min(dataframe_data["len"]), max(dataframe_data["len"]))
+            )
+            # st.sidebar.divider()
+
+            # Sidebar text input for filtering by Source
+            filter_source = st.sidebar.text_input("Filter by Source:", "")
+            # st.sidebar.divider()
+
+            # Sidebar text input for filtering by Destination
+            filter_destination = st.sidebar.text_input("Filter by Destination:", "")
+            # st.sidebar.divider()
+
+            # Apply filters based on user selection
+            if (
+                    selected_protocols is None or not selected_protocols) and not filter_value_len and not filter_source and not filter_destination:
+                st.write("All PCAPs:")
+                Data_to_display_df = dataframe_data.copy()
+                st.dataframe(Data_to_display_df, use_container_width=True)
+
+            else:
+                # Apply filters based on user input
+
+                # Filter by protocol
+                if selected_protocols is not None and selected_protocols:
+                    Data_to_display_df = dataframe_data[dataframe_data["Procotol"].isin(selected_protocols)]
+                else:
+                    Data_to_display_df = dataframe_data
+
+                # Filter by length
+                Data_to_display_df = Data_to_display_df[
+                    (Data_to_display_df["len"] >= filter_value_len[0]) & (
+                            Data_to_display_df["len"] <= filter_value_len[1])
+                    ]
+
+                # Filter by Source
+                if filter_source:
+                    Data_to_display_df = Data_to_display_df[
+                        Data_to_display_df["Source"].str.contains(filter_source, case=False, na=False)]
+
+                # Filter by Destination
+                if filter_destination:
+                    Data_to_display_df = Data_to_display_df[
+                        Data_to_display_df["Destination"].str.contains(filter_destination, case=False, na=False)]
+
+                # Display the filtered dataframe
+                st.write("Filtered PCAPs:")
+
+                column_check = st.checkbox("Do you want to filter the data by column wise also ???")
+                if column_check:
+                    # Multiselect for filtering by columns
+                    selected_columns = st.multiselect(
+                        "Select Columns to Display:",
+                        options=all_columns, default=all_columns
+                    )
+                    Data_to_display_df = Data_to_display_df[selected_columns]
+                # selected_columns = [col for col in Data_to_display_df.columns if st.checkbox(col, value=True )]
+                st.checkbox("Use container width", value=True, key="use_container_width")
+                st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
+
+        else:
+            st.warning("Please upload a valid PCAP file.")
 
 def main():
 
@@ -517,56 +685,8 @@ def main():
     if selected == "Home":
         # Page header
         st.subheader("Understanding PCAP Files in Cybersecurity")
+        Intro()
 
-        # Introduction
-        st.markdown(
-            """
-            Packet Capture (PCAP) files are a common way to store network traffic data. They contain information about
-            the packets exchanged between devices on a network. This data is crucial for network analysis and cybersecurity.
-
-            ## What is a PCAP file?
-
-            A PCAP file (Packet Capture) is a binary file that stores network traffic data. It records the details of
-            each packet, such as source and destination addresses, protocol, and payload. PCAP files are widely used by
-            network administrators, security professionals, and researchers to analyze network behavior.
-
-            ## Importance in Cybersecurity
-
-            PCAP files play a vital role in cybersecurity for several reasons:
-
-            - **Network Traffic Analysis:** Analyzing PCAP files helps detect anomalies, identify patterns, and
-              understand network behavior.
-
-            - **Incident Response:** In the event of a security incident, PCAP files can be instrumental in
-              reconstructing the sequence of events and identifying the root cause.
-
-            - **Forensic Investigations:** PCAP files provide a detailed record of network activity, aiding in
-              forensic investigations to determine the source and impact of security incidents.
-
-            ## Getting Started
-
-            To get started with PCAP analysis, you can use tools like Wireshark or tshark. Additionally, Python
-            libraries such as Scapy and PyShark provide programmatic access to PCAP data.
-
-            ```python
-            # Example using Scapy
-            from scapy.all import rdpcap
-
-            # Load PCAP file
-            pcap_file = "example.pcap"
-            packets = rdpcap(pcap_file)
-
-            # Analyze packets
-            for packet in packets:
-                # Perform analysis here
-                pass
-            ```
-
-            Explore the capabilities of PCAP analysis tools to enhance your understanding of network traffic and
-            strengthen cybersecurity practices.
-
-            """
-        )
 
 
 
@@ -575,104 +695,13 @@ def main():
         page_file_upload()
         page_display_info()
 
-    # if uploaded_file is not None:
-    #     page_file_upload()
-    #
-    #     # Check if the uploaded file is a PCAP file
-    #     if uploaded_file.type == "application/octet-stream":
-    #         # Process the uploaded PCAP file
-    #         pcap_data = rdpcap(os.path.join(uploaded_file.name))
-    #
-    #         # Example: Get all PCAPs
-    #         all_data = get_all_pcap(pcap_data, PD)
-    #         dataframe_data = process_json_data(all_data)
-    #         start_time, end_time, live_time_duration, live_time_duration_str = calculate_live_time(pcap_data)
-    #
-    #         # Add live time information to the data frame
-    #         # dataframe_data['Start Time'] = start_time
-    #         # dataframe_data['End Time'] = end_time
-    #         dataframe_data['Live Time Duration'] = live_time_duration_str
-    #         all_columns = list(dataframe_data.columns)
-    #         st.sidebar.header("P1ease Filter Here:")
-    #         # st.sidebar.divider()
-    #         # Filter reset button
-    #         if st.sidebar.button("Reset Filters"):
-    #             st.experimental_rerun()
-    #         # Multiselect for filtering by protocol
-    #         selected_protocols = st.sidebar.multiselect(
-    #             "Select Protocol:",
-    #             options=dataframe_data["Procotol"].unique(), default=None
-    #         )
-    #         # st.sidebar.divider()
-    #
-    #         # Sidebar slider for filtering by length
-    #         filter_value_len = st.sidebar.slider(
-    #             "Filter by Numeric Column",
-    #             min_value=min(dataframe_data["len"]),
-    #             max_value=max(dataframe_data["len"]),
-    #             value=(min(dataframe_data["len"]), max(dataframe_data["len"]))
-    #         )
-    #         # st.sidebar.divider()
-    #
-    #         # Sidebar text input for filtering by Source
-    #         filter_source = st.sidebar.text_input("Filter by Source:", "")
-    #         # st.sidebar.divider()
-    #
-    #         # Sidebar text input for filtering by Destination
-    #         filter_destination = st.sidebar.text_input("Filter by Destination:", "")
-    #         # st.sidebar.divider()
-    #
-    #
-    #         # Apply filters based on user selection
-    #         if (
-    #                 selected_protocols is None or not selected_protocols) and not filter_value_len and not filter_source and not filter_destination:
-    #             st.write("All PCAPs:")
-    #             Data_to_display_df = dataframe_data.copy()
-    #             st.dataframe(Data_to_display_df, use_container_width=True)
-    #
-    #         else:
-    #             # Apply filters based on user input
-    #
-    #             # Filter by protocol
-    #             if selected_protocols is not None and selected_protocols:
-    #                 Data_to_display_df = dataframe_data[dataframe_data["Procotol"].isin(selected_protocols)]
-    #             else:
-    #                 Data_to_display_df = dataframe_data
-    #
-    #             # Filter by length
-    #             Data_to_display_df = Data_to_display_df[
-    #                 (Data_to_display_df["len"] >= filter_value_len[0]) & (
-    #                             Data_to_display_df["len"] <= filter_value_len[1])
-    #                 ]
-    #
-    #             # Filter by Source
-    #             if filter_source:
-    #                 Data_to_display_df = Data_to_display_df[
-    #                     Data_to_display_df["Source"].str.contains(filter_source, case=False, na=False)]
-    #
-    #             # Filter by Destination
-    #             if filter_destination:
-    #                 Data_to_display_df = Data_to_display_df[
-    #                     Data_to_display_df["Destination"].str.contains(filter_destination, case=False, na=False)]
-    #
-    #             # Display the filtered dataframe
-    #             st.write("Filtered PCAPs:")
-    #
-    #
-    #             column_check=st.checkbox("Do you want to filter the data by column wise also ???")
-    #             if column_check:
-    #                 # Multiselect for filtering by columns
-    #                 selected_columns = st.multiselect(
-    #                     "Select Columns to Display:",
-    #                     options=all_columns, default=all_columns
-    #                 )
-    #                 Data_to_display_df = Data_to_display_df[selected_columns]
-    #             # selected_columns = [col for col in Data_to_display_df.columns if st.checkbox(col, value=True )]
-    #             st.checkbox("Use container width", value=False, key="use_container_width")
-    #             st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
-    #
-    #     else:
-    #         st.warning("Please upload a valid PCAP file.")
+
+    # Raw Data Visualizer and Filtering
+    if selected== "Raw Data & Filtering":
+        st.subheader("Raw Data Can be Visualized Here")
+        RawDataView()
+
+
 
 
 if __name__ == "__main__":
