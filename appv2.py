@@ -671,11 +671,11 @@ def main():
 
 
     st.set_page_config(page_title="PCAP Dashboard", page_icon="📈", layout="wide")
-
+    # download from Bootstrap
     selected= option_menu(
         menu_title=None,
-        options=["Home","Upload File","Raw Data & Filtering"],
-        icons=["house","upload","file"],
+        options=["Home","Upload File","Raw Data & Filtering","Analysis"],
+        icons=["house","upload","files","graph-up"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
@@ -687,9 +687,6 @@ def main():
         st.subheader("Understanding PCAP Files in Cybersecurity")
         Intro()
 
-
-
-
     # File uploader
     if selected == "Upload File":
         page_file_upload()
@@ -700,8 +697,6 @@ def main():
     if selected== "Raw Data & Filtering":
         st.subheader("Raw Data Can be Visualized Here")
         RawDataView()
-
-
 
 
 if __name__ == "__main__":
