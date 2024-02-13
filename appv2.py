@@ -91,6 +91,8 @@ def calculate_live_time(pcap_data):
 # protocol length statistics
 def pcap_len_statistic(PCAPS):
     pcap_len_dict = {'0-300': 0, '301-600': 0, '601-900': 0, '901-1200': 0, '1201-1500': 0, '1500-more': 0}
+    if PCAPS is None:
+        return pcap_len_dict
     for pcap in PCAPS:
         pcap_len = len(corrupt_bytes(pcap))
         if 0 < pcap_len < 300:
@@ -123,6 +125,9 @@ def common_proto_statistic(PCAPS):
     common_proto_dict['HTTP'] = 0
     common_proto_dict['HTTPS'] = 0
     common_proto_dict['Others'] = 0
+
+    if PCAPS is None:
+        return common_proto_dict
     for pcap in PCAPS:
         if pcap.haslayer("IP"):
             common_proto_dict['IP'] += 1
@@ -948,18 +953,7 @@ def main():
     if selected == "Upload File":
         page_file_upload()
         page_display_info()
-        # ###############################
-        m = folium.Map(zoom_start=16)
 
-        # add marker for Liberty Bell
-        tooltip = "Liberty Bell"
-        folium.Marker(
-            [39.949610, -75.150282], popup="Liberty Bell", tooltip=tooltip
-        ).add_to(m)
-
-        # call to render Folium map in Streamlit
-        folium_static(m)
-        ##############################
     # Raw Data Visualizer and Filtering
     if selected == "Raw Data & Filtering":
         st.subheader("Raw Data Can be Visualized Here")
@@ -967,63 +961,110 @@ def main():
 
     if selected == "Analysis":
         st.subheader("Dashboard")
-
+        if "pcap_data" not in st.session_state:
+            st.session_state.pcap_data = []
         # get analysis of data
-        data_of_pcap = st.session_state.pcap_data
-        data_len_stats = pcap_len_statistic(data_of_pcap)  # protocol len statistics
-        data_protocol_stats = common_proto_statistic(data_of_pcap)  # count the occurrences of common network protocols
-        data_count_dict = most_proto_statistic(data_of_pcap,
-                                               PD)  # counts the occurrences of each protocol and returns most common 10 protocols.
-        http_key, http_value = https_stats_main(data_of_pcap)  # https Protocol Statistics
-        dns_key, dns_value = dns_stats_main(data_of_pcap)  # DNS Protocol Statistics
-        # Data Protocol analysis end
+        else:
+            data_of_pcap = st.session_state.pcap_data
+            if data_of_pcap is None:
+                art = """
+                .....+@*+@+..................................................*@+*@+.....
+                ....%-....:*................................................*:....:@....
+                .:%%*.....:*................................................*:.....*%%:.
+                +=.......:@..................................................@-.......-*
+                %..........*#..............................................#*..........%
+                =*...-%:.....#+...................::::...................+%.....:%-..:#=
+                ..:=-..+#:....:%=..........-*%%#+======+*#%#=:.........=%:....:#...-=:..
+                .........*#.....-%-.....+%*==================+#%-....-%-.....#*.........
+                ...........#*.....=%:-%*=========================#*-%=.....*#...........
+                .............%+....-%+=============================#*....+%.............
+                ..............:%=.#*=================================@-=%:..............
+                ................=@====================================##................
+                ................%===+*##%%%%%%%%%%%%%%%%%%%%%%%%###+===*=...............
+                ...............@%%%####%%%%%@@@@@@@@@@@@@@@@%%%%%%###%%%@-..............
+                ..........:+##%@%#*++++==========================++++*#%@@##*:..........
+                .....*%@*+==========+#%%%%%@@%##**+++++**#%%@%%%%%%*==========+*%%*.....
+                ...%+=========#@+::...................................:-%%=========+%...
+                ...*%========*+........#@@@@%*............=%@@@@%:.......-@========%#...
+                ......#@@#===*+.....=@@@@@@@@@@@........*@@@@@@@@@@+.....:@===#@@#:.....
+                .............**....*@@@@@@@@@@@@@:.....%@@@@@@@@@@@@#....-@:............
+                ..............%....@@@@@@@@@@@@@@@....=@@@@@@@@@@@@@@-...+=.............
+                ..............*-...@@@@@@@@@@@@@@@....*@@@@@@@@@@@@@@-...%..............
+                ...............@...#@@@@@@@@@@@@@=....:@@@@@@@@@@@@@@...#=..............
+                ...............:%...%@@@@@@@@@@@*......=@@@@@@@@@@@@:..-+...............
+                ................:#...:%@@@@@@@#....--....*@@@@@@@@=...+#................
+                .................:%:.............+@@@@=..............#=.................
+                ..................-%#............+@@@@=............=@=..................
+                ................-%-..**:...........--............+#:.-%-................
+                ..............:%=.....+%%+:...................=%%*.....=%:..............
+                .............#+.....=%:..%=+%*=:.........=+%*-@..:%+.....+%.............
+                ...........**.....-%-...:#*...%=:==**+=-=%...#+#...:%=.....*#...........
+                .........+#:....-%-.....*@.:**#....-:....%**-.%@.....-%:.....#+.........
+                ..:=-..=#:....:%=.......=*%..%.:-=+**+==:.%..%*@.......=%:....:#=..:-:..
+                =#:..-%:.....#*..........@.=@*.....-:.....*%*.#:.........+#.....:%=..:#=
+                %..........*#............=%...=#%*+++=*#%+:..*#............#*..........%
+                *=.......:@...............-@:...............%+..............:@:.......-*
+                .:%%*.....:*................##............*%:...............*:.....*#%:.
+                ....%:....:*..................:%@#=::-*%@=..................*:....:@....
+                .....+@++%*..................................................*%++@+.....
+                """
 
-        # Traffic analysis start
-        time_flow_dict = time_flow(data_of_pcap)
-        host_ip = get_host_ip(data_of_pcap)
-        data_flow_dict = data_flow(data_of_pcap, host_ip)
-        data_ip_dict = data_in_out_ip(data_of_pcap, host_ip)
-        proto_flow_dict = proto_flow(data_of_pcap)
-        most_flow_dict = most_flow_statistic(data_of_pcap, PD)
-        most_flow_dict = sorted(most_flow_dict.items(), key=lambda d: d[1], reverse=True)
-        if len(most_flow_dict) > 10:
-            most_flow_dict = most_flow_dict[0:10]
-        most_flow_key = list()
-        for key, value in most_flow_dict:
-            most_flow_key.append(key)
-        # Traffic analysis end
+                st.code(art)
+            else:
+                data_len_stats = pcap_len_statistic(data_of_pcap)  # protocol len statistics
+                data_protocol_stats = common_proto_statistic(data_of_pcap)  # count the occurrences of common network protocols
+                data_count_dict = most_proto_statistic(data_of_pcap,
+                                                       PD)  # counts the occurrences of each protocol and returns most common 10 protocols.
+                http_key, http_value = https_stats_main(data_of_pcap)  # https Protocol Statistics
+                dns_key, dns_value = dns_stats_main(data_of_pcap)  # DNS Protocol Statistics
+                # Data Protocol analysis end
 
-        # ///////////////////////////////////////////
-        # ////     Data of Protocol Analysis    /////
-        # ///////////////////////////////////////////
-        DataPacketLengthStatistics(data_len_stats)  #Piechart
-        # CommonProtocolStatistics(data_protocol_stats)
-        CommonProtocolStatistics_ploty(data_protocol_stats) #Barchart
-        MostFrequentProtocolStatistics(data_count_dict) #Piechart
-        HTTP_HTTPSAccessStatistics(http_key,http_value)  #Bar CHart axis -90
-        DNSAccessStatistics(dns_key,dns_value) #BarChart axis -90
+                # Traffic analysis start
+                time_flow_dict = time_flow(data_of_pcap)
+                host_ip = get_host_ip(data_of_pcap)
+                data_flow_dict = data_flow(data_of_pcap, host_ip)
+                data_ip_dict = data_in_out_ip(data_of_pcap, host_ip)
+                proto_flow_dict = proto_flow(data_of_pcap)
+                most_flow_dict = most_flow_statistic(data_of_pcap, PD)
+                most_flow_dict = sorted(most_flow_dict.items(), key=lambda d: d[1], reverse=True)
+                if len(most_flow_dict) > 10:
+                    most_flow_dict = most_flow_dict[0:10]
+                most_flow_key = list()
+                for key, value in most_flow_dict:
+                    most_flow_key.append(key)
+                # Traffic analysis end
 
-        # ///////////////////////////////////////////
-        # ////     Data of Traffic Analysis     /////
-        # ///////////////////////////////////////////
-        TimeFlowChart(time_flow_dict)  #Line
-        DataInOutStatistics(data_flow_dict)  #Pie
-        TotalProtocolPacketFlow(proto_flow_dict) #pie
-        TotalProtocolPacketFlowbarchart(proto_flow_dict)#barchart
+                # ///////////////////////////////////////////
+                # ////     Data of Protocol Analysis    /////
+                # ///////////////////////////////////////////
+                DataPacketLengthStatistics(data_len_stats)  #Piechart
+                # CommonProtocolStatistics(data_protocol_stats)
+                CommonProtocolStatistics_ploty(data_protocol_stats) #Barchart
+                MostFrequentProtocolStatistics(data_count_dict) #Piechart
+                HTTP_HTTPSAccessStatistics(http_key,http_value)  #Bar CHart axis -90
+                DNSAccessStatistics(dns_key,dns_value) #BarChart axis -90
 
-        # print("Hello",data_ip_dict['in_keyp'])
-        InboundIPTrafficDataPacketCountChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyp'], ip_flow['in_packet']
-        InboundIPTotalTrafficChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyl'],ip_flow['in_len']
+                # ///////////////////////////////////////////
+                # ////     Data of Traffic Analysis     /////
+                # ///////////////////////////////////////////
+                TimeFlowChart(time_flow_dict)  #Line
+                DataInOutStatistics(data_flow_dict)  #Pie
+                TotalProtocolPacketFlow(proto_flow_dict) #pie
+                TotalProtocolPacketFlowbarchart(proto_flow_dict)#barchart
 
-        OutboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyp'], ip_flow['out_packet']
-        OutboundIPTotalTrafficChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyl'],ip_flow['out_len']
+                # print("Hello",data_ip_dict['in_keyp'])
+                InboundIPTrafficDataPacketCountChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyp'], ip_flow['in_packet']
+                InboundIPTotalTrafficChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyl'],ip_flow['in_len']
 
-        # ///////////////////////////////////////////
-        # ////              Data of Geoplot     /////
-        # ///////////////////////////////////////////
-        ipmap_result = ipmap(data_of_pcap)
-        # Display the map in Streamlit
-        DrawFoliumMap(ipmap_result)
+                OutboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyp'], ip_flow['out_packet']
+                OutboundIPTotalTrafficChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyl'],ip_flow['out_len']
+
+                # ///////////////////////////////////////////
+                # ////              Data of Geoplot     /////
+                # ///////////////////////////////////////////
+                ipmap_result = ipmap(data_of_pcap)
+                # Display the map in Streamlit
+                DrawFoliumMap(ipmap_result)
 
 
 
