@@ -10,6 +10,9 @@ import requests
 import streamlit as st
 import os
 import random
+from streamlit_folium import folium_static
+from folium.plugins import MarkerCluster
+import folium
 from scapy.all import rdpcap
 import collections
 import tempfile
@@ -26,6 +29,7 @@ from utils.pcap_decode import PcapDecode
 import time
 import plotly.express as px
 from streamlit_pandas_profiling import st_profile_report
+from folium.plugins import HeatMap
 
 PD = PcapDecode()  # Parser
 PCAPS = None  # Packets
@@ -874,6 +878,54 @@ def TotalProtocolPacketFlowbarchart(data):
     st.plotly_chart(fig)
 
 
+def InboundIPTrafficDataPacketCountChart(data):
+    st.write("Inbound IP Traffic Data Packet Count Chart")
+    data10 = {'Inbound IP': list(data['in_keyp']), 'Number of Data Packets': list(data['in_packet'])}
+    df10 = pd.DataFrame(data10)
+    fig = px.bar(df10, x='Inbound IP', y='Number of Data Packets', color="Inbound IP")
+    st.plotly_chart(fig)
+
+def InboundIPTotalTrafficChart(data):
+    st.write("Inbound IP Total Traffic Chart")
+    data11 = {'Inbound IP': list(data['in_keyl']), 'Total Data Packet Traffic': list(data['in_len'])}
+    df11 = pd.DataFrame(data11)
+    fig = px.bar(df11, x='Inbound IP', y='Total Data Packet Traffic', color="Inbound IP")
+    st.plotly_chart(fig)
+
+def OutboundIPTrafficDataPacketCountChart(data):  # ip_flow['out_keyp'], ip_flow['out_packet']
+    st.write("Outbound IP Traffic Data Packet Count Chart")
+    data12 = {'Outbound IP': list(data['out_keyp']), 'Number of Data Packets': list(data['out_packet'])}
+    df12 = pd.DataFrame(data12)
+    fig = px.bar(df12, x='Outbound IP', y='Number of Data Packets', color="Outbound IP")
+    st.plotly_chart(fig)
+def OutboundIPTotalTrafficChart(data):  # ip_flow['out_keyl'],ip_flow['out_len']
+    st.write("Outbound IP Total Traffic Chart")
+    data13 = {'Outbound IP': list(data['out_keyl']), 'Total Data Packet Traffic': list(data['out_len'])}
+    df13 = pd.DataFrame(data13)
+    fig = px.bar(df13, x='Outbound IP', y='Total Data Packet Traffic', color="Outbound IP")
+    st.plotly_chart(fig)
+
+
+def DrawFoliumMap(data):
+    m = folium.Map(location=[data.iloc[0]['Coordinates'][1], data.iloc[0]['Coordinates'][0]],
+                   zoom_start=5)
+
+    # Create MarkerCluster layer
+    marker_cluster = MarkerCluster().add_to(m)
+
+    # Add markers for each location in the DataFrame
+    for index, row in data.iterrows():
+        popup_text = f"IP Address: {row['IP_Address']}<br>Data Traffic: {row['Data_Traffic']}"
+
+        folium.Marker(
+            location=row['Coordinates'][::-1],
+            popup=folium.Popup(popup_text, max_width=300),
+            icon=folium.Icon(color='blue'),  # Customize marker color
+        ).add_to(marker_cluster)
+
+    # Display the map in Streamlit
+    folium_static(m)
+
 def main():
     st.set_page_config(page_title="PCAP Dashboard", page_icon="📈", layout="wide")
     # download from Bootstrap
@@ -896,7 +948,18 @@ def main():
     if selected == "Upload File":
         page_file_upload()
         page_display_info()
+        # ###############################
+        m = folium.Map(zoom_start=16)
 
+        # add marker for Liberty Bell
+        tooltip = "Liberty Bell"
+        folium.Marker(
+            [39.949610, -75.150282], popup="Liberty Bell", tooltip=tooltip
+        ).add_to(m)
+
+        # call to render Folium map in Streamlit
+        folium_static(m)
+        ##############################
     # Raw Data Visualizer and Filtering
     if selected == "Raw Data & Filtering":
         st.subheader("Raw Data Can be Visualized Here")
@@ -947,6 +1010,22 @@ def main():
         DataInOutStatistics(data_flow_dict)  #Pie
         TotalProtocolPacketFlow(proto_flow_dict) #pie
         TotalProtocolPacketFlowbarchart(proto_flow_dict)#barchart
+
+        # print("Hello",data_ip_dict['in_keyp'])
+        InboundIPTrafficDataPacketCountChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyp'], ip_flow['in_packet']
+        InboundIPTotalTrafficChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyl'],ip_flow['in_len']
+
+        OutboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyp'], ip_flow['out_packet']
+        OutboundIPTotalTrafficChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyl'],ip_flow['out_len']
+
+        # ///////////////////////////////////////////
+        # ////              Data of Geoplot     /////
+        # ///////////////////////////////////////////
+        ipmap_result = ipmap(data_of_pcap)
+        # Display the map in Streamlit
+        DrawFoliumMap(ipmap_result)
+
+
 
 
 
