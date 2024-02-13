@@ -682,6 +682,32 @@ def RawDataView():
                 st.checkbox("Use container width", value=True, key="use_container_width")
                 st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
 
+                st.subheader("Statistics of Selected Data")
+                st.subheader("Packet Length Statistics:")
+                st.write(Data_to_display_df['len'].describe())
+
+                # Protocol Distribution
+                protocol_counts = Data_to_display_df['Procotol'].value_counts(normalize=True)
+                st.subheader("Protocol Distribution:")
+                st.write(protocol_counts)
+
+                # Time Analysis
+                Data_to_display_df['time'] = pd.to_datetime(Data_to_display_df['time'])
+                st.subheader("Time Range:")
+                st.write("Earliest timestamp:", Data_to_display_df['time'].min())
+                st.write("Latest timestamp:", Data_to_display_df['time'].max())
+                st.write("Duration:", Data_to_display_df['time'].max() - Data_to_display_df['time'].min())
+
+                # Source-Destination Analysis
+                source_counts = Data_to_display_df['Source'].value_counts()
+                destination_counts = Data_to_display_df['Destination'].value_counts()
+                st.subheader("Source Counts:")
+                st.write(source_counts)
+                st.subheader("Destination Counts:")
+                st.write(destination_counts)
+
+
+
 
 
         else:
