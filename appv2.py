@@ -24,6 +24,7 @@ from streamlit_option_menu import option_menu
 # from scapy.layers.inet import IP,TCP,UDP,
 from utils.pcap_decode import PcapDecode
 import time
+import plotly.express as px
 from streamlit_pandas_profiling import st_profile_report
 
 PD = PcapDecode()  # Parser
@@ -730,7 +731,13 @@ def CommonProtocolStatistics(data):
     }
     st_echarts(options=options, height="500px")
 
-
+def CommonProtocolStatistics_ploty(data):
+    st.write('Common Protocol Statistics')
+    data2 = {'protocol_type': list(data.keys()),
+             'number_of_packets': list(data.values())}
+    df2 = pd.DataFrame(data2)
+    fig = px.bar(df2, x='protocol_type', y='number_of_packets',color="protocol_type")
+    st.plotly_chart(fig)
 
 
 
@@ -769,9 +776,36 @@ def MostFrequentProtocolStatistics(data):
     st_echarts(options=options, height="600px", renderer='svg')
 
 
-# def HTTP_HTTPS_AccessStatistics():
-#
-# def DNSAccessStatistics():
+def HTTP_HTTPSAccessStatistics(key,value):
+    st.write("HTTP/HTTPS Access Statistics")
+    data4 = {'HTTP/HTTPS key': list(key),
+             'HTTP/HTTPS value': list(value)}
+    df4 = pd.DataFrame(data4)
+    fig = px.bar(df4, x='HTTP/HTTPS key', y='HTTP/HTTPS value',color="HTTP/HTTPS key")
+    st.plotly_chart(fig)
+
+
+
+def DNSAccessStatistics(key, value):
+    st.write("DNS Access Statistics")
+    data5 = {'dns_key': list(key),
+             'dns_value': list(value)}
+    df5 = pd.DataFrame(data5)
+    fig = px.bar(df5, x='dns_key', y='dns_value', color="dns_key")
+    st.plotly_chart(fig)
+
+
+def TimeFlowChart(data):
+    data6 = {'Relative_Time': list(data.keys()), 'Packet_Bytes': list(data.values())}
+    df6 = pd.DataFrame(data6)
+    fig = px.line(df6, x='Relative_Time', y="Packet_Bytes")
+    st.plotly_chart(fig)
+def DataInOutStatistics():
+    pass
+
+def TotalProtocolPacketFlow():
+    pass
+
 
 
 
@@ -831,10 +865,24 @@ def main():
             most_flow_key.append(key)
         # Traffic analysis end
 
-        # Data as Plot generated
-        DataPacketLengthStatistics(data_len_stats)
-        CommonProtocolStatistics(data_protocol_stats)
-        MostFrequentProtocolStatistics(data_count_dict)
+        # ///////////////////////////////////////////
+        # ////     Data of Protocol Analysis    /////
+        # ///////////////////////////////////////////
+        DataPacketLengthStatistics(data_len_stats)  #Piechart
+        # CommonProtocolStatistics(data_protocol_stats)
+        CommonProtocolStatistics_ploty(data_protocol_stats) #Barchart
+        MostFrequentProtocolStatistics(data_count_dict) #Piechart
+        HTTP_HTTPSAccessStatistics(http_key,http_value)  #Bar CHart axis -90
+        DNSAccessStatistics(dns_key,dns_value) #BarChart axis -90
+
+        # ///////////////////////////////////////////
+        # ////     Data of Traffic Analysis     /////
+        # ///////////////////////////////////////////
+        TimeFlowChart(time_flow_dict)  #Line
+        DataInOutStatistics()  #Pie
+        TotalProtocolPacketFlow() #pie
+
+
 
 
 
