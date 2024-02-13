@@ -800,13 +800,78 @@ def TimeFlowChart(data):
     df6 = pd.DataFrame(data6)
     fig = px.line(df6, x='Relative_Time', y="Packet_Bytes")
     st.plotly_chart(fig)
-def DataInOutStatistics():
-    pass
+def DataInOutStatistics(data):
+    st.write("Data In/Out Statistics")
+    data7 = {'In/Out': list(data.keys()), 'freq': list(data.values())}
+    df7 = pd.DataFrame(data7)
 
-def TotalProtocolPacketFlow():
-    pass
+    options = {
+        "title": {"text": "Data In/Out Statistics", "subtext": "", "left": "center"},
+        "tooltip": {"trigger": "item"},
+        "legend": {"orient": "vertical", "left": "left", },
+        "series": [
+            {
+                "name": "Data ",
+                "type": "pie",
+                "radius": "50%",
+                "data": [
+                    {"value": count, "name": pcap_len}
+                    for pcap_len, count in zip(df7['In/Out'], df7['freq'])
+                ],
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+            }
+        ],
+        "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
+    }
 
+    st.write("Data Packet Length Statistics11")
+    st_echarts(options=options, height="600px", renderer='svg')
 
+def TotalProtocolPacketFlow(data):
+    st.write("Total Protocol Packet Flow bar chart")
+    data8 = {'Protocol': list(data.keys()), 'freq': list(data.values())}
+    df8 = pd.DataFrame(data8)
+
+    options = {
+        "title": {"text": "Total Protocol PacketFlow", "subtext": "", "left": "center"},
+        "tooltip": {"trigger": "item"},
+        "legend": {"orient": "vertical", "left": "left", },
+        "series": [
+            {
+                "name": "Protocols",
+                "type": "pie",
+                "radius": "50%",
+                "data": [
+                    {"value": count, "name": pcap_len}
+                    for pcap_len, count in zip(df8['Protocol'], df8['freq'])
+                ],
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+            }
+        ],
+        "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
+    }
+
+    st.write("Data Packet Length Statistics11")
+    st_echarts(options=options, height="600px", renderer='svg')
+
+def TotalProtocolPacketFlowbarchart(data):
+    st.write("Total Protocol Packet Flow bar chart")
+    data9 = {'Protocol': list(data.keys()), 'freq': list(data.values())}
+    df9 = pd.DataFrame(data9)
+    fig = px.bar(df9, x='Protocol', y='freq', color="Protocol")
+    st.plotly_chart(fig)
 
 
 def main():
@@ -879,8 +944,10 @@ def main():
         # ////     Data of Traffic Analysis     /////
         # ///////////////////////////////////////////
         TimeFlowChart(time_flow_dict)  #Line
-        DataInOutStatistics()  #Pie
-        TotalProtocolPacketFlow() #pie
+        DataInOutStatistics(data_flow_dict)  #Pie
+        TotalProtocolPacketFlow(proto_flow_dict) #pie
+        TotalProtocolPacketFlowbarchart(proto_flow_dict)#barchart
+
 
 
 
