@@ -488,7 +488,8 @@ def ipmap(PCAPS):
     merged_df = merged_df.drop('IP', axis=1)
 
     # Display the merged DataFrame
-    st.write(merged_df)
+    with st.expander("Geo Data Associated with PCAPs "):
+        st.write(merged_df)
 
     return merged_df
 
@@ -683,28 +684,41 @@ def RawDataView():
                 st.dataframe(Data_to_display_df, use_container_width=st.session_state.use_container_width)
 
                 st.subheader("Statistics of Selected Data")
-                st.subheader("Packet Length Statistics:")
-                st.write(Data_to_display_df['len'].describe())
-
-                # Protocol Distribution
-                protocol_counts = Data_to_display_df['Procotol'].value_counts(normalize=True)
-                st.subheader("Protocol Distribution:")
-                st.write(protocol_counts)
-
                 # Time Analysis
                 Data_to_display_df['time'] = pd.to_datetime(Data_to_display_df['time'])
                 st.subheader("Time Range:")
                 st.write("Earliest timestamp:", Data_to_display_df['time'].min())
                 st.write("Latest timestamp:", Data_to_display_df['time'].max())
                 st.write("Duration:", Data_to_display_df['time'].max() - Data_to_display_df['time'].min())
+                ####################################
+                col1, col2 = st.columns(2)
 
-                # Source-Destination Analysis
-                source_counts = Data_to_display_df['Source'].value_counts()
-                destination_counts = Data_to_display_df['Destination'].value_counts()
-                st.subheader("Source Counts:")
-                st.write(source_counts)
-                st.subheader("Destination Counts:")
-                st.write(destination_counts)
+                # Column 1: Packet Length Statistics
+                with col1:
+                    st.subheader("Packet Length Statistics:")
+                    st.table(Data_to_display_df['len'].describe())
+
+                    # Source Counts
+                    source_counts = Data_to_display_df['Source'].value_counts()
+                    st.subheader("Source Counts:")
+                    st.table(source_counts)
+
+                # Column 2: Protocol Distribution and Destination Counts
+                with col2:
+                    # Protocol Distribution
+                    protocol_counts = Data_to_display_df['Procotol'].value_counts(normalize=True)
+                    st.subheader("Protocol Distribution:")
+                    st.table(protocol_counts)
+
+                    # Destination Counts
+                    destination_counts = Data_to_display_df['Destination'].value_counts()
+                    st.subheader("Destination Counts:")
+                    st.table(destination_counts)
+
+
+
+                #####################################
+
 
 
 
@@ -716,7 +730,7 @@ def RawDataView():
 
 
 def DataPacketLengthStatistics(data):
-    st.write("Data Packet Length Statistics")
+    # st.write("Data Packet Length Statistics")
     data1 = {'pcap_len': list(data.keys()), 'count': list(data.values())}
     df1 = pd.DataFrame(data1)
 
@@ -745,7 +759,7 @@ def DataPacketLengthStatistics(data):
         "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
     }
 
-    st.write("Data Packet Length Statistics11")
+    # st.write("Data Packet Length Statistics")
     st_echarts(options=options, height="600px", renderer='svg')
 
 
@@ -767,18 +781,20 @@ def CommonProtocolStatistics(data):
     st_echarts(options=options, height="500px")
 
 def CommonProtocolStatistics_ploty(data):
-    st.write('Common Protocol Statistics')
+    # st.write('Common Protocol Statistics')
     data2 = {'protocol_type': list(data.keys()),
              'number_of_packets': list(data.values())}
     df2 = pd.DataFrame(data2)
-    fig = px.bar(df2, x='protocol_type', y='number_of_packets',color="protocol_type")
+    fig = px.bar(df2, x='protocol_type', y='number_of_packets',color="protocol_type",title="Common Protocol Statistics")
+    fig.update_layout(title_x=0.5)
+
     st.plotly_chart(fig)
 
 
 
 
 def MostFrequentProtocolStatistics(data):
-    st.write("Data Packet Length Statistics")
+    # st.write("Data Packet Length Statistics")
     data3 = {'protocol_type': list(data.keys()), 'freq': list(data.values())}
     df3 = pd.DataFrame(data3)
 
@@ -807,36 +823,40 @@ def MostFrequentProtocolStatistics(data):
         "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
     }
 
-    st.write("Data Packet Length Statistics11")
+
+    # st.write("Data Packet Length Statistics")
     st_echarts(options=options, height="600px", renderer='svg')
 
 
 def HTTP_HTTPSAccessStatistics(key,value):
-    st.write("HTTP/HTTPS Access Statistics")
+    # st.write("HTTP/HTTPS Access Statistics")
     data4 = {'HTTP/HTTPS key': list(key),
              'HTTP/HTTPS value': list(value)}
     df4 = pd.DataFrame(data4)
-    fig = px.bar(df4, x='HTTP/HTTPS key', y='HTTP/HTTPS value',color="HTTP/HTTPS key")
+    fig = px.bar(df4, x='HTTP/HTTPS key', y='HTTP/HTTPS value',color="HTTP/HTTPS key",title="HTTP/HTTPS Access Statistics")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 
 
 
 def DNSAccessStatistics(key, value):
-    st.write("DNS Access Statistics")
+    # st.write("DNS Access Statistics")
     data5 = {'dns_key': list(key),
              'dns_value': list(value)}
     df5 = pd.DataFrame(data5)
-    fig = px.bar(df5, x='dns_key', y='dns_value', color="dns_key")
+    fig = px.bar(df5, x='dns_key', y='dns_value', color="dns_key",title="DNS Access Statistics")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 
 
 def TimeFlowChart(data):
     data6 = {'Relative_Time': list(data.keys()), 'Packet_Bytes': list(data.values())}
     df6 = pd.DataFrame(data6)
-    fig = px.line(df6, x='Relative_Time', y="Packet_Bytes")
+    fig = px.line(df6, x='Relative_Time', y="Packet_Bytes",title="Time Flow Chart")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 def DataInOutStatistics(data):
-    st.write("Data In/Out Statistics")
+    # st.write("Data In/Out Statistics")
     data7 = {'In/Out': list(data.keys()), 'freq': list(data.values())}
     df7 = pd.DataFrame(data7)
 
@@ -865,11 +885,11 @@ def DataInOutStatistics(data):
         "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
     }
 
-    st.write("Data Packet Length Statistics11")
+    # st.write("Data Packet Length Statistics")
     st_echarts(options=options, height="600px", renderer='svg')
 
 def TotalProtocolPacketFlow(data):
-    st.write("Total Protocol Packet Flow bar chart")
+    # st.write("Total Protocol Packet Flow bar chart")
     data8 = {'Protocol': list(data.keys()), 'freq': list(data.values())}
     df8 = pd.DataFrame(data8)
 
@@ -898,42 +918,48 @@ def TotalProtocolPacketFlow(data):
         "backgroundColor": "rgba(0, 0, 0, 0)",  # Transparent background
     }
 
-    st.write("Data Packet Length Statistics11")
+    # st.write("Data Packet Length Statistics")
     st_echarts(options=options, height="600px", renderer='svg')
 
 def TotalProtocolPacketFlowbarchart(data):
-    st.write("Total Protocol Packet Flow bar chart")
+    # st.write("Total Protocol Packet Flow bar chart")
     data9 = {'Protocol': list(data.keys()), 'freq': list(data.values())}
     df9 = pd.DataFrame(data9)
-    fig = px.bar(df9, x='Protocol', y='freq', color="Protocol")
+    fig = px.bar(df9, x='Protocol', y='freq', color="Protocol",title="Total Protocol Packet Flow bar chart")
+    fig.update_layout(title_x=0.5)
+
     st.plotly_chart(fig)
 
 
 def InboundIPTrafficDataPacketCountChart(data):
-    st.write("Inbound IP Traffic Data Packet Count Chart")
+    # st.write("Inbound IP Traffic Data Packet Count Chart")
     data10 = {'Inbound IP': list(data['in_keyp']), 'Number of Data Packets': list(data['in_packet'])}
     df10 = pd.DataFrame(data10)
-    fig = px.bar(df10, x='Inbound IP', y='Number of Data Packets', color="Inbound IP")
+    fig = px.bar(df10, x='Inbound IP', y='Number of Data Packets', color="Inbound IP",title="Inbound IP Traffic Data Packet Count Chart")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 
 def InboundIPTotalTrafficChart(data):
-    st.write("Inbound IP Total Traffic Chart")
+    # st.write("Inbound IP Total Traffic Chart")
     data11 = {'Inbound IP': list(data['in_keyl']), 'Total Data Packet Traffic': list(data['in_len'])}
     df11 = pd.DataFrame(data11)
-    fig = px.bar(df11, x='Inbound IP', y='Total Data Packet Traffic', color="Inbound IP")
+    fig = px.bar(df11, x='Inbound IP', y='Total Data Packet Traffic', color="Inbound IP",title="Inbound IP Total Traffic Chart")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 
 def OutboundIPTrafficDataPacketCountChart(data):  # ip_flow['out_keyp'], ip_flow['out_packet']
-    st.write("Outbound IP Traffic Data Packet Count Chart")
+    # st.write("Outbound IP Traffic Data Packet Count Chart")
     data12 = {'Outbound IP': list(data['out_keyp']), 'Number of Data Packets': list(data['out_packet'])}
     df12 = pd.DataFrame(data12)
-    fig = px.bar(df12, x='Outbound IP', y='Number of Data Packets', color="Outbound IP")
+    fig = px.bar(df12, x='Outbound IP', y='Number of Data Packets', color="Outbound IP",title="Outbound IP Traffic Data Packet Count Chart")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 def OutboundIPTotalTrafficChart(data):  # ip_flow['out_keyl'],ip_flow['out_len']
     st.write("Outbound IP Total Traffic Chart")
     data13 = {'Outbound IP': list(data['out_keyl']), 'Total Data Packet Traffic': list(data['out_len'])}
     df13 = pd.DataFrame(data13)
-    fig = px.bar(df13, x='Outbound IP', y='Total Data Packet Traffic', color="Outbound IP")
+    fig = px.bar(df13, x='Outbound IP', y='Total Data Packet Traffic', color="Outbound IP",title="Outbound IP Total Traffic Chart")
+    fig.update_layout(title_x=0.5)
     st.plotly_chart(fig)
 
 
@@ -955,15 +981,15 @@ def DrawFoliumMap(data):
         ).add_to(marker_cluster)
 
     # Display the map in Streamlit
-    folium_static(m)
+    folium_static(m,width=1820 , height=600)
 
 def main():
     st.set_page_config(page_title="PCAP Dashboard", page_icon="📈", layout="wide")
     # download from Bootstrap
     selected = option_menu(
         menu_title=None,
-        options=["Home", "Upload File", "Raw Data & Filtering", "Analysis"],
-        icons=["house", "upload", "files", "graph-up"],
+        options=["Home", "Upload File", "Raw Data & Filtering", "Analysis","Geoplots"],
+        icons=["house", "upload", "files", "graph-up","globe"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
@@ -1063,34 +1089,131 @@ def main():
                 # ///////////////////////////////////////////
                 # ////     Data of Protocol Analysis    /////
                 # ///////////////////////////////////////////
-                DataPacketLengthStatistics(data_len_stats)  #Piechart
-                # CommonProtocolStatistics(data_protocol_stats)
-                CommonProtocolStatistics_ploty(data_protocol_stats) #Barchart
-                MostFrequentProtocolStatistics(data_count_dict) #Piechart
-                HTTP_HTTPSAccessStatistics(http_key,http_value)  #Bar CHart axis -90
-                DNSAccessStatistics(dns_key,dns_value) #BarChart axis -90
+                # DataPacketLengthStatistics(data_len_stats)  #Piechart
+                # # CommonProtocolStatistics(data_protocol_stats)
+                # CommonProtocolStatistics_ploty(data_protocol_stats) #Barchart
+                # MostFrequentProtocolStatistics(data_count_dict) #Piechart
+                # HTTP_HTTPSAccessStatistics(http_key,http_value)  #Bar CHart axis -90
+                # DNSAccessStatistics(dns_key,dns_value) #BarChart axis -90
+                # col1, col2 = st.columns([2, 3])
+                #
+                # # Column 1: DataPacketLengthStatistics - Piechart
+                # with col1:
+                #     st.subheader("Data Packet Length Statistics")
+                #     DataPacketLengthStatistics(data_len_stats)
+                #
+                #     # MostFrequentProtocolStatistics - Piechart
+                #     st.subheader("Most Frequent Protocol Statistics")
+                #     MostFrequentProtocolStatistics(data_count_dict)
+                #
+                # # Column 2: CommonProtocolStatistics_plotly - Barchart
+                # with col2:
+                #     st.subheader("Common Protocol Statistics")
+                #     CommonProtocolStatistics_ploty(data_protocol_stats)
+                #
+                #     # HTTP_HTTPSAccessStatistics - BarChart axis -90
+                #     st.subheader("HTTP/HTTPS Access Statistics")
+                #     HTTP_HTTPSAccessStatistics(http_key, http_value)
+                #
+                #     # DNSAccessStatistics - BarChart axis -90
+                #     st.subheader("DNS Access Statistics")
+                #     DNSAccessStatistics(dns_key, dns_value)
+
+                st.title(" Data of Protocol Analysis  ")
+                # Create a 2x2 column layout
+                col1, col2 = st.columns(2)
+
+                # Column 1: Uneven row heights
+                with col1:
+                    # Row 1
+                    with st.expander("Data Packet Length Statistics"):
+                        DataPacketLengthStatistics(data_len_stats)
+
+                    # Row 2 (smaller height)
+                    with st.expander("Most Frequent Protocol Statistics"):
+                        MostFrequentProtocolStatistics(data_count_dict)
+
+
+                # Column 2: Uneven row heights
+                with col2:
+                    # Row 1
+                    with st.expander("Common Protocol Statistics"):
+                        CommonProtocolStatistics_ploty(data_protocol_stats)
+
+                    # Row 2 (larger height)
+                    with st.expander("HTTP/HTTPS Access Statistics Details"):
+                        HTTP_HTTPSAccessStatistics(http_key, http_value)
+
+                    # Row 3 (smaller height)
+                    with st.expander("DNS Access Statistics"):
+                        DNSAccessStatistics(dns_key, dns_value)
 
                 # ///////////////////////////////////////////
                 # ////     Data of Traffic Analysis     /////
                 # ///////////////////////////////////////////
-                TimeFlowChart(time_flow_dict)  #Line
-                DataInOutStatistics(data_flow_dict)  #Pie
-                TotalProtocolPacketFlow(proto_flow_dict) #pie
-                TotalProtocolPacketFlowbarchart(proto_flow_dict)#barchart
+                st.title("Data of Traffic Analysis")
+                col3, col4 = st.columns(2)
+                with col3:
+                    # Row 1
+                    with st.expander("Time Flow Chart"):
+                        TimeFlowChart(time_flow_dict)
 
-                # print("Hello",data_ip_dict['in_keyp'])
-                InboundIPTrafficDataPacketCountChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyp'], ip_flow['in_packet']
-                InboundIPTotalTrafficChart(data_ip_dict) #Bar CHart axis -90 #ip_flow['in_keyl'],ip_flow['in_len']
+                    # Row 2 (smaller height)
+                    with st.expander("Data In/Out Statistics"):
+                        DataInOutStatistics(data_flow_dict)
 
-                OutboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyp'], ip_flow['out_packet']
-                OutboundIPTotalTrafficChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyl'],ip_flow['out_len']
 
-                # ///////////////////////////////////////////
-                # ////              Data of Geoplot     /////
-                # ///////////////////////////////////////////
-                ipmap_result = ipmap(data_of_pcap)
-                # Display the map in Streamlit
-                DrawFoliumMap(ipmap_result)
+
+                # Column 2: Uneven row heights
+                with col4:
+                    # Row 1
+                    with st.expander("Total Protocol Packet Flow"):
+                        TotalProtocolPacketFlow(proto_flow_dict)
+
+
+                    # Row 2 (larger height)
+                    with st.expander("Total Protocol Packet Flow bar chart"):
+                        TotalProtocolPacketFlowbarchart(proto_flow_dict)
+
+
+
+
+                # Inbound /Outbound
+
+
+                st.title("Inbound /Outbound ")
+                col5, col6 = st.columns(2)
+                with col5:
+                    # Row 1
+                    with st.expander("Inbound IP Traffic Data Packet Count Chart"):
+                        InboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 #ip_flow['in_keyp'], ip_flow['in_packet']
+
+                    # Row 2 (smaller height)
+                    with st.expander("Inbound IP Total Traffic Chart"):
+                        InboundIPTotalTrafficChart(data_ip_dict)  #Bar CHart axis -90 #ip_flow['in_keyl'],ip_flow['in_len']
+
+                # Column 2: Uneven row heights
+                with col6:
+                    # Row 1
+                    with st.expander("Outbound IP Traffic Data Packet Count Chart"):
+                        OutboundIPTrafficDataPacketCountChart(data_ip_dict)  #Bar CHart axis -90 # ip_flow['out_keyp'], ip_flow['out_packet']
+
+                    # Row 2 (larger height)
+                    with st.expander("Outbound IP Total Traffic Chart"):
+                        OutboundIPTotalTrafficChart(data_ip_dict)   #Bar CHart axis -90 # ip_flow['out_keyl'],ip_flow['out_len']
+
+
+
+
+    if selected == "Geoplots":
+        st.subheader("Geoplot")
+        # ///////////////////////////////////////////
+        # ////              Data of Geoplot     /////
+        # ///////////////////////////////////////////
+        data_of_pcap = st.session_state.pcap_data
+        ipmap_result = ipmap(data_of_pcap)
+        # Display the map in Streamlit
+        DrawFoliumMap(ipmap_result)
 
 
 
