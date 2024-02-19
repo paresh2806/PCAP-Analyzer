@@ -1210,10 +1210,19 @@ def main():
         # ///////////////////////////////////////////
         # ////              Data of Geoplot     /////
         # ///////////////////////////////////////////
+        if "pcap_data" not in st.session_state:
+            st.session_state.pcap_data = []
+
+        # get analysis of data
         data_of_pcap = st.session_state.pcap_data
-        ipmap_result = ipmap(data_of_pcap)
-        # Display the map in Streamlit
-        DrawFoliumMap(ipmap_result)
+
+        if data_of_pcap is not None:
+            ipmap_result = ipmap(data_of_pcap)
+            # Display the map in Streamlit
+            DrawFoliumMap(ipmap_result)
+        else:
+            st.warning("No valid data for Geoplot.")
+
 
 
 
