@@ -71,8 +71,13 @@ To run the application, execute the following command in the terminal:
 This command starts the Streamlit server and opens the application in your default web browser, where you can upload PCAP files and begin analysis.
 
 
+https://github.com/paresh2806/PCAP-Analyzer/assets/81606923/6e76a250-f940-44f0-b95f-ca4fb72986fe
+
+
+
 ## Demo
-![Video](https://github.com/paresh2806/PCAP-Analyzer/blob/master/images/Demo_APP.mp4) 
+https://github.com/paresh2806/PCAP-Analyzer/assets/81606923/c6c71bd9-ceac-4071-9a7d-b32a5f6a04d1
+
 
 
 ## Screenshots 
