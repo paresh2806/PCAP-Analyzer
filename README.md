@@ -54,6 +54,11 @@ cd PCAP-Analyzer
 ```
 pip install -r requirements.txt
 ```
+4. Run the app:
+```
+streamlit run .\app.py
+```
+
 
 
 ## Usage
@@ -65,7 +70,13 @@ To run the application, execute the following command in the terminal:
 
 This command starts the Streamlit server and opens the application in your default web browser, where you can upload PCAP files and begin analysis.
 
-## Screenshots or Demo
+
+## Demo
+![Video](https://github.com/paresh2806/PCAP-Analyzer/blob/master/images/Demo_APP.mp4) 
+
+
+## Screenshots 
+
 ![HomePage](https://github.com/paresh2806/PCAP-Analyzer/blob/Features/images/HomePage.PNG) 
 
 ![UploadFile](https://github.com/paresh2806/PCAP-Analyzer/blob/Features/images/UploadFile.PNG)
