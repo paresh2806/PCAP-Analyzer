@@ -1214,9 +1214,8 @@ def main():
             st.session_state.pcap_data = []
 
         # get analysis of data
-        data_of_pcap = st.session_state.pcap_data
-
-        if data_of_pcap is not None:
+        elif "pcap_data" in st.session_state:
+            data_of_pcap = st.session_state.pcap_data
             ipmap_result = ipmap(data_of_pcap)
             # Display the map in Streamlit
             DrawFoliumMap(ipmap_result)
