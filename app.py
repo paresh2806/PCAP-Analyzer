@@ -472,7 +472,7 @@ def ipmap(PCAPS):
 
     # Check if myip_geo is not None before creating the DataFrame
     if myip_geo is not None:
-        myip_geo_df = pd.DataFrame(list(myip_geo.items()), columns=['MyLocation', 'MyCoordinates'])
+        myip_geo_df = pd.DataFrame(myip_geo, columns=['MyLocation', 'MyCoordinates'])
 
         # Merge the DataFrames based on the 'Location' column
         merged_df = geo_df.merge(ip_df, on='Location', how='left').merge(myip_geo_df, left_on='Location',
