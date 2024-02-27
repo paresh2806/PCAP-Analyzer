@@ -1212,15 +1212,15 @@ def main():
         # ///////////////////////////////////////////
         if "pcap_data" not in st.session_state:
             st.session_state.pcap_data = []
-
-        # get analysis of data
-        elif "pcap_data" in st.session_state:
-            data_of_pcap = st.session_state.pcap_data
-            ipmap_result = ipmap(data_of_pcap)
-            # Display the map in Streamlit
-            DrawFoliumMap(ipmap_result)
-        else:
             st.warning("No valid data for Geoplot.")
+        else:
+            data_of_pcap = st.session_state.pcap_data
+            if data_of_pcap:
+                ipmap_result = ipmap(data_of_pcap)
+                # Display the map in Streamlit
+                DrawFoliumMap(ipmap_result)
+            else:
+                st.warning("No valid data for Geoplot.")
 
 
 
