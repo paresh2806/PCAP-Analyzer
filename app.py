@@ -605,7 +605,7 @@ def RawDataView():
     uploaded_file = st.session_state.uploaded_file
     if uploaded_file is not None:
         # Check if the uploaded file is a PCAP file
-        if uploaded_file.type == "application/octet-stream":
+        if uploaded_file.name.endswith((".pcap", ".cap", "csv")):
             # Process the uploaded PCAP file
             pcap_data = rdpcap(os.path.join(uploaded_file.name))
             st.session_state.pcap_data = pcap_data
